@@ -38,10 +38,13 @@ import {
   getJourneys,
   getLiveUsercount,
   getMetric,
+  getMetricLite,
   getOrgEventCount,
   getOutboundLinks,
   getOverview,
   getOverviewBucketed,
+  getOverviewBucketedLite,
+  getOverviewLite,
   getPageTitles,
   getPerformanceByDimension,
   getPerformanceOverview,
@@ -124,6 +127,7 @@ import {
 import {
   addUserToOrganization,
   createUserApiKey,
+  createUserInOrganization,
   getMyOrganizations,
   getUserOrganizations,
   listOrganizationMembers,
@@ -258,6 +262,9 @@ async function analyticsRoutes(fastify: FastifyInstance) {
   fastify.get("/sites/:siteId/live-user-count", { logLevel: "silent", ...publicSite }, getLiveUsercount);
   fastify.get("/sites/:siteId/overview", publicSite, getOverview);
   fastify.get("/sites/:siteId/overview-bucketed", publicSite, getOverviewBucketed);
+  fastify.get("/sites/:siteId/overview-lite", publicSite, getOverviewLite);
+  fastify.get("/sites/:siteId/overview-bucketed-lite", publicSite, getOverviewBucketedLite);
+  fastify.get("/sites/:siteId/metric-lite", publicSite, getMetricLite);
   fastify.get("/sites/:siteId/metric", publicSite, getMetric);
   fastify.get("/sites/:siteId/page-titles", publicSite, getPageTitles);
   fastify.get("/sites/:siteId/error-names", publicSite, getErrorNames);
@@ -354,6 +361,7 @@ async function organizationsRoutes(fastify: FastifyInstance) {
   fastify.post("/organizations/:organizationId/sites", orgAdminParams, addSite);
   fastify.get("/organizations/:organizationId/members", orgMember, listOrganizationMembers);
   fastify.post("/organizations/:organizationId/members", authOnly, addUserToOrganization);
+  fastify.post("/organizations/:organizationId/users", authOnly, createUserInOrganization);
 
   // Member site access management (admin/owner only)
   fastify.put("/organizations/:organizationId/members/:memberId/sites", orgAdminParams, updateMemberSiteAccess);
@@ -393,6 +401,10 @@ async function stripeAdminRoutes(fastify: FastifyInstance) {
   // ClickHouse stats (available for all admins)
   fastify.get("/admin/clickhouse-stats", adminOnly, getClickhouseStats);
   fastify.get("/admin/clickhouse-query-log", adminOnly, getClickhouseQueryLog);
+  fastify.get("/admin/sites", adminOnly, getAdminSites);
+  fastify.get("/admin/organizations", adminOnly, getAdminOrganizations);
+  fastify.get("/admin/service-event-count", adminOnly, getAdminServiceEventCount);
+  fastify.post("/admin/telemetry", collectTelemetry); // Public - telemetry collection
 
   // STRIPE & ADMIN
   if (IS_CLOUD) {
@@ -406,12 +418,7 @@ async function stripeAdminRoutes(fastify: FastifyInstance) {
     fastify.post("/stripe/cancellation-feedback", authOnly, submitCancellationFeedback);
     fastify.post("/stripe/webhook", { config: { rawBody: true } }, handleWebhook); // Public - Stripe webhook
 
-    // Admin Routes
-    fastify.get("/admin/sites", adminOnly, getAdminSites);
-    fastify.get("/admin/organizations", adminOnly, getAdminOrganizations);
-    fastify.get("/admin/service-event-count", adminOnly, getAdminServiceEventCount);
-    fastify.post("/admin/telemetry", collectTelemetry); // Public - telemetry collection
-
+    // AppSumo Routes
     fastify.post("/as/activate", authOnly, activateAppSumoLicense);
     fastify.post("/as/webhook", handleAppSumoWebhook); // Public - AppSumo webhook
   }
