@@ -80,6 +80,7 @@ export async function runCustomQuery(
     });
   } catch (error) {
     request.log.error(error, "Failed to run custom analytics query");
-    return reply.status(400).send({ error: "Failed to run query" });
+    const message = error instanceof Error && error.message ? error.message : "Failed to run query";
+    return reply.status(400).send({ error: message });
   }
 }

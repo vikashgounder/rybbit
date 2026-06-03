@@ -50,3 +50,5 @@ coverage/
 .agents/
 
 .deepsec/
+
+.github/
